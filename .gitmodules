@@ -1,0 +1,3 @@
+[submodule "external/iPlug2"]
+	path = external/iPlug2
+	url = https://github.com/futureboard/iPlugBase

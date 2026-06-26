@@ -1,0 +1,41 @@
+# Build output
+/build/
+/build-*/
+/out/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.cmake.stamp
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Plugin install artifacts
+*.vst3
+*.clap
+*.dll
+*.exe
+*.pdb
+*.lib
+*.exp
+
+# Python (training)
+__pycache__/
+*.pyc
+training/data/
+training/checkpoints/
+training/exports/
+.venv/
+venv/
