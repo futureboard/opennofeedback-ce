@@ -3,6 +3,7 @@
 // ============================================================================
 #include "OpenDeFeedback.h"
 #include "IPlug_include_in_plug_src.h"
+#include "IControls.h"   // ITextControl (used for the readout in OnIdle)
 
 #include <algorithm>
 

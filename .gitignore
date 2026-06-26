@@ -39,3 +39,5 @@ training/checkpoints/
 training/exports/
 .venv/
 venv/
+
+*.log
