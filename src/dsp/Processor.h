@@ -60,6 +60,8 @@ public:
   float GetDetectedFreqHz() const noexcept { return mDetectedFreqHz.load(std::memory_order_relaxed); }
   float GetReductionDb()    const noexcept { return mReductionDb.load(std::memory_order_relaxed); }
   int   GetActiveNotches()  const noexcept { return mActiveNotches.load(std::memory_order_relaxed); }
+  float GetInputPeak()      const noexcept { return mInputPeak.load(std::memory_order_relaxed); }
+  float GetOutputPeak()     const noexcept { return mOutputPeak.load(std::memory_order_relaxed); }
   int   GetLatencySamples() const noexcept { return 0; } // strictly causal, zero-latency
 
 private:
@@ -111,6 +113,8 @@ private:
   std::atomic<float> mDetectedFreqHz {0.0f};
   std::atomic<float> mReductionDb    {0.0f};
   std::atomic<int>   mActiveNotches  {0};
+  std::atomic<float> mInputPeak      {0.0f};
+  std::atomic<float> mOutputPeak     {0.0f};
 };
 
 } // namespace odf

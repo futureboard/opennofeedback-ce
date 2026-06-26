@@ -1,0 +1,54 @@
+{
+  "_note": [
+    "Design-time / build-time theme source ONLY.",
+    "Consumed by tools/generate_theme_header.py to emit",
+    "src/generated/DefaultTheme.h. The plugin NEVER opens, reads, or parses",
+    "this file at runtime. All keys are neutral semantic tokens.",
+    "",
+    "Color values may be authored as any of:",
+    "  \"#RRGGBB\", \"#RRGGBBAA\", [r,g,b] / [r,g,b,a] (0-255 ints),",
+    "  or normalized float arrays in 0..1. The generator normalizes them all.",
+    "Authored mostly as normalized floats so the generated header is exact."
+  ],
+
+  "appearance": "dark",
+
+  "colors": {
+    "Background":     [0.070, 0.075, 0.085, 1.0],
+    "Panel":          [0.095, 0.102, 0.118, 1.0],
+    "PanelElevated":  [0.120, 0.130, 0.150, 1.0],
+    "Border":         [0.210, 0.225, 0.250, 1.0],
+    "BorderMuted":    [0.150, 0.160, 0.180, 1.0],
+    "TextPrimary":    [0.880, 0.900, 0.930, 1.0],
+    "TextSecondary":  [0.600, 0.640, 0.700, 1.0],
+    "TextMuted":      [0.420, 0.450, 0.500, 1.0],
+    "Accent":         [0.480, 0.620, 1.000, 1.0],
+    "AccentMuted":    [0.230, 0.300, 0.460, 1.0],
+    "Warning":        "#FFA340",
+    "Danger":         "#FF5C5C",
+    "Success":        [0.400, 0.840, 0.600, 1.0],
+
+    "MeterInput":     [0.480, 0.620, 1.000, 1.0],
+    "MeterOutput":    [0.400, 0.840, 0.600, 1.0],
+    "MeterReduction": "#FFA340"
+  },
+
+  "metrics": {
+    "RadiusSmall":   5.0,
+    "RadiusMedium":  8.0,
+    "RadiusLarge":   12.0,
+
+    "SpacingXSmall": 4.0,
+    "SpacingSmall":  8.0,
+    "SpacingMedium": 12.0,
+    "SpacingLarge":  16.0
+  },
+
+  "typography": {
+    "FontSizeTiny":    10.0,
+    "FontSizeSmall":   11.0,
+    "FontSizeBody":    12.0,
+    "FontSizeTitle":   14.0,
+    "FontSizeDisplay": 28.0
+  }
+}

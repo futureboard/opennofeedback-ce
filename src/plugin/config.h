@@ -60,4 +60,7 @@
 #define APP_COPY_AUV3 0
 #define APP_SIGNAL_VECTOR_SIZE 64
 
+// UI fonts embedded as binary resources (Windows). The UI loads INTER_FN first
+// and falls back to the bundled face if absent (see ui/Theme.cpp).
+#define INTER_FN "InterVariable.ttf"
 #define ROBOTO_FN "Roboto-Regular.ttf"

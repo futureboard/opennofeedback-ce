@@ -68,6 +68,36 @@ disables the noise and reverb stages). `Strength` is the global dry/wet blend
 applied at the very end. `Artifact Guard` caps how much total attenuation the
 chain is allowed to apply.
 
+## UI & theme
+
+The GUI is a compact, modern, dark, technical, minimal, flat, editor-like,
+realtime-system-focused layout. There are no skeuomorphic controls and no
+analog-hardware imitation.
+
+Theming is fully **static and generated** — the plugin parses no JSON at
+runtime:
+
+* `src/themes/Default.json` is a **design-time / build-time source only**. The
+  plugin never opens, reads, parses, or depends on it at runtime.
+* `tools/generate_theme_header.py` reads that source and emits
+  `src/generated/DefaultTheme.h`, a header of `inline constexpr` color / spacing
+  / radius / font-size constants under `odf::Theme`. Source keys are mapped onto
+  **neutral semantic tokens** only; no foreign/vendor token names are preserved.
+  Missing tokens get a safe fallback with a generated comment.
+* The generated header is committed, so the build never depends on Python or on
+  reading JSON. Regenerate after editing the source with
+  `cmake --build build --target OpenDeFeedback-theme` (or by running the script).
+* `src/ui/Theme.h` is the wrapper the UI includes; it re-exports the generated
+  constants, converts them to IGraphics colors, and declares the flat vector
+  draw primitives (`odf::UI::DrawPanel`, `DrawHeaderText`, `DrawStatusPill`,
+  `DrawMeterBar`, `DrawMiniSlider`). UI drawing code contains **no raw color
+  literals** — all colors come from `odf::Theme`.
+
+The UI font (`InterVariable.ttf`) is loaded in the UI layer only, with a
+graceful fallback to a bundled face if it is unavailable. Meter levels and the
+detected-frequency / reduction readout are pushed from the editor idle callback
+using the processor's lock-free atomics (no audio-thread UI work).
+
 ## ML integration point (future)
 
 `FeatureExtractor` produces a fixed-size `FeatureFrame`; `TinyModelStub::Infer`

@@ -8,9 +8,9 @@ de-noise and gentle de-reverb for live sound, built on
 > The machine-learning path is scaffolded (`src/ml/`) but inert — it ships a
 > neutral stub and does not affect the audio yet.
 
-OpenDeFeedback is inspired by professional AI-assisted live-audio processors,
-but it does **not** copy any commercial product's DSP or UI. It is MIT-licensed
-and built to be a clean, hackable base.
+OpenDeFeedback is an independent, original project. It does **not** copy any
+other product's DSP or UI design. It is MIT-licensed and built to be a clean,
+hackable base.
 
 ---
 
@@ -53,11 +53,31 @@ OpenDeFeedback/
     common/                POD params + realtime-safe helpers
     dsp/                   the realtime DSP engine and stages
     ml/                    placeholder tiny-model interfaces (inert)
+    ui/                    theme wrapper + flat vector draw primitives
+    themes/                Default.json (design-time theme source ONLY)
+    generated/             DefaultTheme.h (generated, committed)
     plugin/                iPlug2 host glue + NanoVG GUI + config.h
+  tools/                   generate_theme_header.py (build-time codegen)
   resources/               shared font/image assets
   training/                future PyTorch pipeline (stubs)
   docs/                    architecture.md, dsp_design.md
 ```
+
+### Theme (static, generated — no runtime JSON)
+
+UI colors, spacing, radii and font sizes come from a generated static header,
+`src/generated/DefaultTheme.h` (namespace `odf::Theme`). The plugin never reads
+or parses JSON at runtime. `src/themes/Default.json` is a **design-time source
+only**; regenerate the header after editing it with:
+
+```bash
+python tools/generate_theme_header.py            # writes src/generated/DefaultTheme.h
+# or, via CMake:
+cmake --build build --target OpenDeFeedback-theme
+```
+
+The UI uses `InterVariable.ttf` when available and falls back gracefully to a
+bundled face otherwise.
 
 See [docs/architecture.md](docs/architecture.md) and
 [docs/dsp_design.md](docs/dsp_design.md) for the design.

@@ -3,9 +3,10 @@
 // ============================================================================
 #include "OpenDeFeedback.h"
 #include "IPlug_include_in_plug_src.h"
-#include "IControls.h"   // ITextControl (used for the readout in OnIdle)
+#include "OpenDeFeedback_Controls.h"   // themed custom controls + meters/readout
 
 #include <algorithm>
+#include <cmath>
 
 OpenDeFeedback::OpenDeFeedback(const InstanceInfo& info)
 : Plugin(info, MakeConfig(kNumParams, kNumPresets))
@@ -57,9 +58,6 @@ void OpenDeFeedback::OnReset()
 
   mProcessor.Prepare(sr, blockSize, nChans);
   PushParameters();
-
-  mInputMeterSender.Reset(sr);
-  mOutputMeterSender.Reset(sr);
 }
 
 void OpenDeFeedback::OnParamChange(int /*paramIdx*/)
@@ -88,9 +86,6 @@ void OpenDeFeedback::ProcessBlock(sample** inputs, sample** outputs, int nFrames
   const int nChans = std::min(NOutChansConnected(), 2);
   const int nF = std::min(nFrames, mAllocatedBlock);
 
-  // ---- Input meter (operates on the raw host buffers) --------------------
-  mInputMeterSender.ProcessBlock(inputs, nFrames, kCtrlTagInputMeter, nChans);
-
   // ---- sample (double) -> float ------------------------------------------
   for (int ch = 0; ch < nChans; ++ch)
     for (int n = 0; n < nF; ++n)
@@ -103,37 +98,40 @@ void OpenDeFeedback::ProcessBlock(sample** inputs, sample** outputs, int nFrames
   for (int ch = 0; ch < nChans; ++ch)
     for (int n = 0; n < nF; ++n)
       outputs[ch][n] = static_cast<sample>(mOutPtrs[ch][n]);
-
-  // ---- Output meter ------------------------------------------------------
-  mOutputMeterSender.ProcessBlock(outputs, nFrames, kCtrlTagOutputMeter, nChans);
 }
 
 void OpenDeFeedback::OnIdle()
 {
-  // Drain meter queues to their controls (main thread).
-  mInputMeterSender.TransmitData(*this);
-  mOutputMeterSender.TransmitData(*this);
-
 #if IPLUG_EDITOR
-  // Update the text readout from the processor's atomics.
-  if (auto* pGraphics = GetUI())
+  auto* pGraphics = GetUI();
+  if (!pGraphics)
+    return;
+
+  // Map a linear peak to a 0..1 meter position on a -60..0 dB scale.
+  auto peakToNorm = [](float peak) -> float {
+    if (peak <= 1.0e-5f) return 0.0f;
+    const float db = 20.0f * std::log10(peak);
+    const float n = (db + 60.0f) / 60.0f;
+    return n < 0.f ? 0.f : (n > 1.f ? 1.f : n);
+  };
+
+  const float inNorm  = peakToNorm(mProcessor.GetInputPeak());
+  const float outNorm = peakToNorm(mProcessor.GetOutputPeak());
+  const float redDb   = mProcessor.GetReductionDb();           // <= 0
+  const float redNorm = std::min(1.0f, (-redDb) / 24.0f);      // 24 dB == full
+
+  if (auto* pMeters = pGraphics->GetControlWithTag(kCtrlTagMeters))
+    pMeters->As<odf::MetersControl>()->SetLevels(inNorm, outNorm, redNorm);
+
+  if (auto* pReadout = pGraphics->GetControlWithTag(kCtrlTagReadout))
   {
-    if (auto* pCtrl = pGraphics->GetControlWithTag(kCtrlTagReadout))
-    {
-      const float hz  = mProcessor.GetDetectedFreqHz();
-      const float dB  = mProcessor.GetReductionDb();
-      const int notch = mProcessor.GetActiveNotches();
-
-      WDL_String str;
-      if (hz > 1.0f)
-        str.SetFormatted(128, "Detected: %.2f kHz   Reduction: %.1f dB   Notches: %d   Latency: 0",
-                         hz / 1000.0f, dB, notch);
-      else
-        str.SetFormatted(128, "Detected: --   Reduction: %.1f dB   Notches: %d   Latency: 0",
-                         dB, notch);
-
-      pCtrl->As<ITextControl>()->SetStr(str.Get());
-    }
+    const float hz = mProcessor.GetDetectedFreqHz();
+    WDL_String str;
+    if (hz > 1.0f)
+      str.SetFormatted(128, "Detected: %.2f kHz    Reduction: %.1f dB", hz / 1000.0f, redDb);
+    else
+      str.SetFormatted(128, "Detected: --    Reduction: %.1f dB", redDb);
+    pReadout->As<odf::ReadoutControl>()->SetText(str.Get());
   }
 #endif
 }

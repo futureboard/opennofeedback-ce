@@ -55,6 +55,8 @@ void Processor::Reset()
   mDetectedFreqHz.store(0.0f, std::memory_order_relaxed);
   mReductionDb.store(0.0f, std::memory_order_relaxed);
   mActiveNotches.store(0, std::memory_order_relaxed);
+  mInputPeak.store(0.0f, std::memory_order_relaxed);
+  mOutputPeak.store(0.0f, std::memory_order_relaxed);
 }
 
 void Processor::SetParameters(const Parameters& p) noexcept
@@ -118,12 +120,19 @@ void Processor::ProcessBlock(float** inputs, float** outputs, int nFrames, int n
   // ---- Hard bypass: copy through, publish neutral meters -----------------
   if (mConfig.bypass)
   {
+    float peak = 0.0f;
     for (int ch = 0; ch < nChannels; ++ch)
+    {
       if (inputs[ch] != outputs[ch])
         std::copy(inputs[ch], inputs[ch] + nFrames, outputs[ch]);
+      for (int n = 0; n < nFrames; ++n)
+        peak = std::max(peak, std::fabs(static_cast<float>(inputs[ch][n])));
+    }
     mDetectedFreqHz.store(0.0f, std::memory_order_relaxed);
     mReductionDb.store(0.0f, std::memory_order_relaxed);
     mActiveNotches.store(0, std::memory_order_relaxed);
+    mInputPeak.store(peak,  std::memory_order_relaxed);
+    mOutputPeak.store(peak, std::memory_order_relaxed);
     return;
   }
 
@@ -134,6 +143,8 @@ void Processor::ProcessBlock(float** inputs, float** outputs, int nFrames, int n
       std::fill(outputs[ch], outputs[ch] + nFrames, 0.0f);
     mDetectedFreqHz.store(0.0f, std::memory_order_relaxed);
     mReductionDb.store(0.0f, std::memory_order_relaxed);
+    mInputPeak.store(0.0f,  std::memory_order_relaxed);
+    mOutputPeak.store(0.0f, std::memory_order_relaxed);
     return;
   }
 
@@ -207,16 +218,25 @@ void Processor::ProcessBlock(float** inputs, float** outputs, int nFrames, int n
   // ---- 6. Artifact guard (limits net over-attenuation) -------------------
   mArtifactGuard.ProcessBlock(mDryPtrs.data(), outputs, nF, nCh);
 
-  // ---- 7. Global Strength dry/wet blend ----------------------------------
+  // ---- 7. Global Strength dry/wet blend + peak metering ------------------
+  float inPeak = 0.0f;
+  float outPeak = 0.0f;
   for (int n = 0; n < nF; ++n)
   {
     const float s = mStrength.Process();
     for (int ch = 0; ch < nCh; ++ch)
-      outputs[ch][n] = Lerp(mDry[ch][n], outputs[ch][n], s);
+    {
+      inPeak = std::max(inPeak, std::fabs(mDry[ch][n]));
+      const float y = Lerp(mDry[ch][n], outputs[ch][n], s);
+      outputs[ch][n] = y;
+      outPeak = std::max(outPeak, std::fabs(y));
+    }
   }
 
   // ---- 8. Publish metering ----------------------------------------------
   mReductionDb.store(reductionDb, std::memory_order_relaxed);
+  mInputPeak.store(inPeak,  std::memory_order_relaxed);
+  mOutputPeak.store(outPeak, std::memory_order_relaxed);
 }
 
 } // namespace odf

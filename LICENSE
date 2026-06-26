@@ -26,7 +26,9 @@ Third-party components:
 
 * iPlug2 (and bundled WDL, NanoVG, etc.) — see external/iPlug2/LICENSE.txt.
   iPlug2 is distributed under its own permissive (zlib-like / WDL) license.
-* Roboto font (resources/fonts/Roboto-Regular.ttf) — Apache License 2.0,
-  Copyright the Roboto Project Authors.
+* Roboto font (Roboto-Regular.ttf) — Apache License 2.0, Copyright the Roboto
+  Project Authors.
+* Inter font (InterVariable.ttf) — SIL Open Font License 1.1, Copyright the
+  Inter Project Authors.
 
 These components retain their original licenses.

@@ -18,6 +18,11 @@ set(ODF_SOURCES
   OpenDeFeedback_UI.cpp
   config.h
 
+  # ui (theme wrapper + flat vector primitives)
+  ${ODF_SRC_DIR}/ui/Theme.cpp
+  ${ODF_SRC_DIR}/ui/Theme.h
+  ${ODF_SRC_DIR}/generated/DefaultTheme.h
+
   # dsp
   ${ODF_SRC_DIR}/dsp/Processor.cpp
   ${ODF_SRC_DIR}/dsp/Processor.h
@@ -66,7 +71,39 @@ iplug_add_plugin(OpenDeFeedback
   SOURCES
     ${ODF_SOURCES}
   RESOURCES
+    resources/fonts/InterVariable.ttf
     resources/fonts/Roboto-Regular.ttf
   FORMATS APP VST3
   UI IGRAPHICS
 )
+
+# Make `#include "generated/DefaultTheme.h"` and `#include "ui/Theme.h"` resolve
+# from any plugin source (in addition to the relative includes already used).
+foreach(_t OpenDeFeedback-vst3 OpenDeFeedback-app)
+  if(TARGET ${_t})
+    target_include_directories(${_t} PRIVATE ${ODF_SRC_DIR})
+  endif()
+endforeach()
+
+# ---------------------------------------------------------------------------
+#  Optional, MANUAL theme-header regeneration target.
+#
+#  The plugin always builds against the committed src/generated/DefaultTheme.h
+#  and never reads JSON at build time or runtime. When you edit the design-time
+#  source (src/themes/Default.json), regenerate the header with:
+#
+#     cmake --build build --target OpenDeFeedback-theme
+#
+#  (or run tools/generate_theme_header.py directly). This target is intentionally
+#  decoupled from the plugin targets so the build never depends on Python.
+# ---------------------------------------------------------------------------
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_FOUND)
+  add_custom_target(OpenDeFeedback-theme
+    COMMAND ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/generate_theme_header.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../themes/Default.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../generated/DefaultTheme.h"
+    COMMENT "Regenerating src/generated/DefaultTheme.h from src/themes/Default.json"
+    VERBATIM)
+endif()

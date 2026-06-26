@@ -8,7 +8,6 @@
 #pragma once
 
 #include "IPlug_include_in_plug_hdr.h"
-#include "ISender.h"
 
 #include <array>
 #include <vector>
@@ -31,11 +30,10 @@ enum EParams
   kNumParams
 };
 
-// Control tags for deferred (meter / readout) updates.
+// Control tags for UI elements updated from the editor's idle callback.
 enum ECtrlTags
 {
-  kCtrlTagInputMeter = 0,
-  kCtrlTagOutputMeter,
+  kCtrlTagMeters = 0,
   kCtrlTagReadout,
   kNumCtrlTags
 };
@@ -73,9 +71,5 @@ private:
   std::array<float*, 2>                    mInPtrs {nullptr, nullptr};
   std::array<float*, 2>                    mOutPtrs {nullptr, nullptr};
   int mAllocatedBlock = 0;
-
-  // Deferred meters.
-  IPeakSender<2> mInputMeterSender;
-  IPeakSender<2> mOutputMeterSender;
 #endif
 };

@@ -1,60 +1,129 @@
 // ============================================================================
 //  OpenDeFeedback_Controls.h
 //
-//  Shared GUI theme (dark live-console palette) and a couple of small custom
-//  IGraphics controls used by the layout. Drawing is vector-based (NanoVG via
-//  IGraphics), no bitmaps.
+//  Custom flat vector controls for the compact, modern, dark, technical,
+//  minimal, editor-like UI. Every color/spacing/radius/font size is taken from
+//  the generated static theme (odf::Theme) via the UI primitives in
+//  ui/Theme.h. No raw color literals appear in this file or its .cpp.
 // ============================================================================
 #pragma once
 
 #include "IControl.h"
 #include "IControls.h"
+#include "../ui/Theme.h"
 
 using namespace iplug;
 using namespace igraphics;
 
-namespace odfui
-{
+namespace odf {
 
-// ---- Dark graphite palette -------------------------------------------------
-const IColor kColorBg        = IColor(255, 18, 20, 24);   // deep graphite
-const IColor kColorPanel     = IColor(255, 28, 31, 37);   // raised panel
-const IColor kColorPanelEdge = IColor(255, 44, 48, 56);
-const IColor kColorText      = IColor(255, 210, 214, 220);
-const IColor kColorTextDim   = IColor(255, 130, 136, 146);
-const IColor kColorAccent    = IColor(255, 0, 200, 170);  // teal accent
-const IColor kColorAccentDim = IColor(255, 0, 120, 104);
-const IColor kColorWarn      = IColor(255, 235, 96, 80);   // mute/clip red
+/** Shared IVStyle for the interactive vector controls (knob list / toggles),
+ *  with all colors sourced from the generated theme. */
+IVStyle ThemedStyle();
 
-/** The house IVStyle used by every vector control for a consistent flat look. */
-IVStyle ODFStyle();
-
-/** Variant with the warning (red) accent — used by Mute. */
-IVStyle ODFWarnStyle();
+/** Variant using the Danger accent (e.g. the Mute toggle). */
+IVStyle ThemedDangerStyle();
 
 // ---------------------------------------------------------------------------
-//  ODFTitleControl — draws the plugin name + a thin accent underline.
+//  HeaderControl — product title + subtitle and a thin accent tick.
 // ---------------------------------------------------------------------------
-class ODFTitleControl : public IControl
+class HeaderControl : public IControl
 {
 public:
-  ODFTitleControl(const IRECT& bounds, const char* title, const char* subtitle);
+  HeaderControl(const IRECT& bounds, const char* title, const char* subtitle);
   void Draw(IGraphics& g) override;
-
 private:
-  WDL_String mTitle;
-  WDL_String mSubtitle;
+  WDL_String mTitle, mSubtitle;
 };
 
 // ---------------------------------------------------------------------------
-//  ODFReadoutControl — text readout (detected freq / reduction / latency).
-//  A thin subclass of ITextControl so we have a concrete type to target by tag.
+//  SectionPanelControl — a flat rounded background panel for grouping.
 // ---------------------------------------------------------------------------
-class ODFReadoutControl : public ITextControl
+class SectionPanelControl : public IControl
 {
 public:
-  ODFReadoutControl(const IRECT& bounds, const char* initialStr);
+  SectionPanelControl(const IRECT& bounds, float radius);
+  void Draw(IGraphics& g) override;
+private:
+  float mRadius;
+};
+
+// ---------------------------------------------------------------------------
+//  StatusPillControl — small pill with a settable text (e.g. latency / CPU).
+// ---------------------------------------------------------------------------
+class StatusPillControl : public IControl
+{
+public:
+  StatusPillControl(const IRECT& bounds, const char* text);
+  void Draw(IGraphics& g) override;
+  void SetText(const char* text);
+private:
+  WDL_String mText;
+};
+
+// ---------------------------------------------------------------------------
+//  ReadoutControl — single technical readout line (detected / reduction).
+// ---------------------------------------------------------------------------
+class ReadoutControl : public IControl
+{
+public:
+  ReadoutControl(const IRECT& bounds, const char* text);
+  void Draw(IGraphics& g) override;
+  void SetText(const char* text);
+private:
+  WDL_String mText;
+};
+
+// ---------------------------------------------------------------------------
+//  MetersControl — input / output / reduction level bars (read-only).
+//  Levels are pushed from the editor's idle callback.
+// ---------------------------------------------------------------------------
+class MetersControl : public IControl
+{
+public:
+  explicit MetersControl(const IRECT& bounds);
+  void Draw(IGraphics& g) override;
+  void SetLevels(float inNorm, float outNorm, float reductionNorm);
+private:
+  float mIn = 0.f, mOut = 0.f, mReduction = 0.f;
+};
+
+// ---------------------------------------------------------------------------
+//  StrengthControl — large numeric "intensity" display, drag to change.
+//  Flat / technical: a big number plus a thin progress bar, no skeuomorphism.
+// ---------------------------------------------------------------------------
+class StrengthControl : public IKnobControlBase
+{
+public:
+  StrengthControl(const IRECT& bounds, int paramIdx);
   void Draw(IGraphics& g) override;
 };
 
-} // namespace odfui
+// ---------------------------------------------------------------------------
+//  ModeListControl — vertical selectable list bound to the Mode enum param.
+// ---------------------------------------------------------------------------
+class ModeListControl : public IControl
+{
+public:
+  ModeListControl(const IRECT& bounds, int paramIdx, int numItems);
+  void Draw(IGraphics& g) override;
+  void OnMouseDown(float x, float y, const IMouseMod& mod) override;
+private:
+  int mNumItems;
+  int HitItem(float y) const;
+};
+
+// ---------------------------------------------------------------------------
+//  MiniSliderControl — compact horizontal slider bound to a 0..1 param, drawn
+//  via the themed DrawMiniSlider primitive. Shows a label and a value string.
+// ---------------------------------------------------------------------------
+class MiniSliderControl : public ISliderControlBase
+{
+public:
+  MiniSliderControl(const IRECT& bounds, int paramIdx, const char* label);
+  void Draw(IGraphics& g) override;
+private:
+  WDL_String mLabel;
+};
+
+} // namespace odf
